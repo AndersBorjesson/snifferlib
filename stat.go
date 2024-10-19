@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 )
 
@@ -20,6 +21,7 @@ type ConnectionData struct {
 	DownloadPackets int
 	ProcessName     string
 	InterfaceName   string
+	ProcessId       int32
 }
 
 type NetworkData struct {
@@ -156,7 +158,7 @@ func (s *StatsManager) Put(stat Stat) {
 	s.stat = stat
 }
 
-func (s *StatsManager) getProcName(openSockets OpenSockets, localSocket LocalSocket) string {
+func (s *StatsManager) getProcName(openSockets OpenSockets, localSocket LocalSocket) (string, int32) {
 	ips := []string{localSocket.IP, "*"}
 	for _, ip := range ips {
 		cloned := localSocket
@@ -164,10 +166,10 @@ func (s *StatsManager) getProcName(openSockets OpenSockets, localSocket LocalSoc
 
 		v, ok := openSockets[cloned]
 		if ok {
-			return v.String()
+			return v.String(), v.ProcId()
 		}
 	}
-	return unknownProcessName
+	return unknownProcessName, -1
 }
 
 func (s *StatsManager) GetStats() interface{} {
@@ -183,7 +185,7 @@ func (s *StatsManager) getNetworkData() *NetworkData {
 
 	stat := s.stat
 	for conn, info := range stat.Utilization {
-		procName := s.getProcName(stat.OpenSockets, conn.Local)
+		procName, _ := s.getProcName(stat.OpenSockets, conn.Local)
 		if procName == unknownProcessName {
 			continue
 		}
@@ -217,11 +219,13 @@ func (s *StatsManager) getSnapshot() *Snapshot {
 
 	stat := s.stat
 	for conn, info := range stat.Utilization {
-		procName := s.getProcName(stat.OpenSockets, conn.Local)
+		procName, ProcessId := s.getProcName(stat.OpenSockets, conn.Local))
 		if _, ok := connections[conn]; !ok {
 			connections[conn] = &ConnectionData{
 				InterfaceName: info.Interface,
 				ProcessName:   procName,
+
+				ProcessId: ProcessId,
 			}
 		}
 		connections[conn].UploadBytes += info.UploadBytes

@@ -153,7 +153,8 @@ type inetDiagRequest struct {
 	ReqDiag inetDiagReqV2
 }
 
-type netlinkConn struct{}
+type netlinkConn struct {
+}
 
 // ipv4 be32 to string
 func (nl *netlinkConn) ipv4(b be32) string {
@@ -215,7 +216,7 @@ func (nl *netlinkConn) sockdiagSend(proto, family uint8, states uint32) (skfd in
 	return skfd, nil
 }
 
-func (nl *netlinkConn) sockdiagRecv(skfd, proto int, inodeMap map[uint32]string) (OpenSockets, error) {
+func (nl *netlinkConn) sockdiagRecv(skfd, proto int, inodeMap map[uint32]string, inode2pid map[uint32]int32) (OpenSockets, error) {
 	sockets := make(OpenSockets)
 	buffer := make([]byte, os.Getpagesize())
 loop:
@@ -243,10 +244,14 @@ loop:
 			srcIP, _ := nl.ipHex2String(m.IDiagFamily, m.ID.IdiagSrc)
 
 			procInfo := ProcessInfo{
-				Pid:  int(msg.Header.Pid),
-				Name: inodeMap[m.IDiagInode],
+				Pid:       int(msg.Header.Pid),
+				Name:      inodeMap[m.IDiagInode],
+				ProcessId: inode2pid[m.IDiagInode],
 			}
-
+			if true {
+				// fmt.Println("Name", procInfo.Name)
+				// fmt.Println(msg.Header)
+			}
 			var p Protocol
 			switch proto {
 			case syscall.IPPROTO_TCP:
@@ -261,7 +266,7 @@ loop:
 	return sockets, nil
 }
 
-func (nl *netlinkConn) getOpenSockets(inodeMap map[uint32]string) (OpenSockets, error) {
+func (nl *netlinkConn) getOpenSockets(inodeMap map[uint32]string, inode2Pid map[uint32]int32) (OpenSockets, error) {
 	sockets := make(OpenSockets)
 
 	type Req struct {
@@ -292,7 +297,7 @@ func (nl *netlinkConn) getOpenSockets(inodeMap map[uint32]string) (OpenSockets, 
 	}
 
 	for _, fd := range fds {
-		m, err := nl.sockdiagRecv(fd.fd, fd.proto, inodeMap)
+		m, err := nl.sockdiagRecv(fd.fd, fd.proto, inodeMap, inode2Pid)
 		if err != nil {
 			return sockets, err
 		}
@@ -305,8 +310,9 @@ func (nl *netlinkConn) getOpenSockets(inodeMap map[uint32]string) (OpenSockets, 
 	return sockets, nil
 }
 
-func (nl *netlinkConn) getAllProcsInodes(pids ...int32) map[uint32]string {
+func (nl *netlinkConn) getAllProcsInodes(pids ...int32) (map[uint32]string, map[uint32]int32) {
 	inode2Procs := make(map[uint32]string)
+	inode2Pid := make(map[uint32]int32)
 	for _, pid := range pids {
 		procName, inodes, err := nl.getProcInodes(pid)
 		if err != nil {
@@ -315,9 +321,10 @@ func (nl *netlinkConn) getAllProcsInodes(pids ...int32) map[uint32]string {
 
 		for _, inode := range inodes {
 			inode2Procs[inode] = procName
+			inode2Pid[inode] = pid
 		}
 	}
-	return inode2Procs
+	return inode2Procs, inode2Pid
 }
 
 func (nl *netlinkConn) getProcInodes(pid int32) (string, []uint32, error) {
@@ -387,8 +394,9 @@ func (nl *netlinkConn) GetOpenSockets() (OpenSockets, error) {
 		return nil, err
 	}
 
-	inodeMap := nl.getAllProcsInodes(pids...)
-	return nl.getOpenSockets(inodeMap)
+	inodeMap, inodePidMap := nl.getAllProcsInodes(pids...)
+
+	return nl.getOpenSockets(inodeMap, inodePidMap)
 }
 
 func GetSocketFetcher() SocketFetcher {

@@ -25,12 +25,16 @@ type Connection struct {
 }
 
 type ProcessInfo struct {
-	Pid  int
-	Name string
+	Pid       int
+	Name      string
+	ProcessId int32
 }
 
 func (p ProcessInfo) String() string {
 	return fmt.Sprintf("<%d>:%s", p.Pid, p.Name)
+}
+func (p ProcessInfo) ProcId() int32 {
+	return p.ProcessId
 }
 
 type (

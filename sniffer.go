@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/gizak/termui/v3"
 )
 
 func exit(s string) {
@@ -53,10 +51,10 @@ func DefaultOptions() Options {
 		BPFFilter:         "tcp or udp",
 		Interval:          2,
 		ViewMode:          ModeTableBytes,
-		Unit:              UnitKB,
+		Unit:              UnitB,
 		DevicesPrefix:     []string{"en", "lo", "eth", "em", "bond"},
 		DisableDNSResolve: false,
-		AllDevices:        false,
+		AllDevices:        true,
 	}
 }
 
@@ -77,11 +75,11 @@ func NewSniffer(opts Options) (*Sniffer, error) {
 	}
 
 	return &Sniffer{
-		opts:          opts,
-		dnsResolver:   dnsResolver,
-		pcapClient:    pcapClient,
-		statsManager:  NewStatsManager(opts),
-		ui:            NewUIComponent(opts),
+		opts:         opts,
+		dnsResolver:  dnsResolver,
+		pcapClient:   pcapClient,
+		statsManager: NewStatsManager(opts),
+		// ui:            NewUIComponent(opts),
 		socketFetcher: GetSocketFetcher(),
 	}, nil
 }
@@ -95,36 +93,36 @@ func (s *Sniffer) SwitchViewMode() {
 }
 
 func (s *Sniffer) Start() {
-	events := termui.PollEvents()
+	// events := termui.PollEvents()
 	s.Refresh()
-	var paused bool
+	// var paused bool
 
 	ticker := time.NewTicker(time.Duration(s.opts.Interval) * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case e := <-events:
-			switch e.ID {
-			case "<Tab>":
-				s.ui.viewer.Shift()
-			case "<Space>":
-				paused = !paused
-			case "<Resize>":
-				payload := e.Payload.(termui.Resize)
-				s.ui.viewer.Resize(payload.Width, payload.Height)
-			case "s", "S":
-				s.SwitchViewMode()
-			case "q", "Q", "<C-c>":
-				return
-			}
+	// for {
+	// 	select {
+	// 	case e := <-events:
+	// 		switch e.ID {
+	// 		case "<Tab>":
+	// 			s.ui.viewer.Shift()
+	// 		case "<Space>":
+	// 			paused = !paused
+	// 		case "<Resize>":
+	// 			payload := e.Payload.(termui.Resize)
+	// 			s.ui.viewer.Resize(payload.Width, payload.Height)
+	// 		case "s", "S":
+	// 			s.SwitchViewMode()
+	// 		case "q", "Q", "<C-c>":
+	// 			return
+	// 		}
 
-		case <-ticker.C:
-			if !paused {
-				s.Refresh()
-			}
-		}
-	}
+	// 	case <-ticker.C:
+	// 		if !paused {
+	// 			s.Refresh()
+	// 		}
+	// 	}
+	// }
 }
 
 func (s *Sniffer) Close() {
@@ -141,5 +139,5 @@ func (s *Sniffer) Refresh() {
 	}
 
 	s.statsManager.Put(Stat{OpenSockets: openSockets, Utilization: utilization})
-	s.ui.viewer.Render(s.statsManager.GetStats())
+	// s.ui.viewer.Render(s.statsManager.GetStats())
 }

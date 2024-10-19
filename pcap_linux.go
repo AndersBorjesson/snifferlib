@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -60,6 +61,7 @@ func NewPcapClient(lookup Lookup, opt Options) (*PcapClient, error) {
 
 func (c *PcapClient) getAvailableDevices() error {
 	devs, err := listPrefixDevices(c.devicesPrefix, c.allDevices)
+
 	if err != nil {
 		return err
 	}
@@ -67,7 +69,9 @@ func (c *PcapClient) getAvailableDevices() error {
 	for _, device := range devs {
 		handler, err := c.getHandler(device.Name)
 		if err != nil {
-			return errors.Wrapf(err, "get device(%s) name failed", device.Name)
+			log.Printf("get device(%s) name failed: %v", device.Name, err)
+			break
+			// return errors.Wrapf(err, "get device(%s) name failed", device.Name)
 		}
 
 		if c.bpfFilter != "" {

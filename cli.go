@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -64,9 +66,47 @@ func NewApp() *cobra.Command {
 	return app
 }
 
+func UseAllDevices() []string {
+	devices, err := ListAllDevices()
+	if err != nil {
+		log.Fatalln("ListAllDevices failed:", err)
+	}
+	devNames := make([]string, 0, len(devices))
+	for _, dev := range devices {
+		if dev.Name != "any" {
+			devNames = append(devNames, dev.Name)
+		}
+	}
+	fmt.Println(devNames)
+	return devNames
+}
 func main() {
-	app := NewApp()
-	if err := app.Execute(); err != nil {
+
+	devices, err := ListAllDevices()
+	fmt.Println(devices, err)
+	defaultOpts := DefaultOptions()
+	defaultOpts.DevicesPrefix = UseAllDevices()
+
+	fmt.Println(defaultOpts)
+	sniffer, err := NewSniffer(defaultOpts)
+	if err != nil {
 		exit(err.Error())
 	}
+	defer sniffer.Close()
+	for {
+		sniffer.Refresh()
+		A := (sniffer.statsManager.GetStats())
+		B := A.(*Snapshot)
+		for l1, l2 := range (*B).Connections {
+			fmt.Println(l1, l2)
+		}
+		// fmt.Println((*B).Processes)
+		// fmt.Println("sniffer.statsManager.stat")
+		// fmt.Println(sniffer.statsManager.stat)
+		time.Sleep(1 * time.Second)
+	}
+	// app := NewApp()
+	// if err := app.Execute(); err != nil {
+	// 	exit(err.Error())
+	// }
 }
