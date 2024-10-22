@@ -1,7 +1,7 @@
 //go:build freebsd || darwin
 // +build freebsd darwin
 
-package main
+package snifferlib
 
 import (
 	"bytes"

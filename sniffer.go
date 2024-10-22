@@ -1,4 +1,4 @@
-package main
+package snifferlib
 
 import (
 	"fmt"
@@ -59,11 +59,11 @@ func DefaultOptions() Options {
 }
 
 type Sniffer struct {
-	opts          Options
-	dnsResolver   *DNSResolver
-	pcapClient    *PcapClient
-	statsManager  *StatsManager
-	ui            *UIComponent
+	opts         Options
+	dnsResolver  *DNSResolver
+	pcapClient   *PcapClient
+	statsManager *StatsManager
+	// ui            *UIComponent
 	socketFetcher SocketFetcher
 }
 
@@ -88,8 +88,8 @@ func (s *Sniffer) SwitchViewMode() {
 	s.opts.ViewMode = (s.opts.ViewMode + 1) % 3
 	s.statsManager = NewStatsManager(s.opts)
 
-	s.ui.Close()
-	s.ui = NewUIComponent(s.opts)
+	// s.ui.Close()
+	// s.ui = NewUIComponent(s.opts)
 }
 
 func (s *Sniffer) Start() {
@@ -126,7 +126,7 @@ func (s *Sniffer) Start() {
 }
 
 func (s *Sniffer) Close() {
-	s.ui.Close()
+	// s.ui.Close()
 	s.pcapClient.Close()
 	s.dnsResolver.Close()
 }

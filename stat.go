@@ -1,7 +1,6 @@
-package main
+package snifferlib
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -219,7 +218,7 @@ func (s *StatsManager) getSnapshot() *Snapshot {
 
 	stat := s.stat
 	for conn, info := range stat.Utilization {
-		procName, ProcessId := s.getProcName(stat.OpenSockets, conn.Local))
+		procName, ProcessId := s.getProcName(stat.OpenSockets, conn.Local)
 		if _, ok := connections[conn]; !ok {
 			connections[conn] = &ConnectionData{
 				InterfaceName: info.Interface,
