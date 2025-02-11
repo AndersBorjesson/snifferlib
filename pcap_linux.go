@@ -37,6 +37,7 @@ type PcapClient struct {
 }
 
 func NewPcapClient(lookup Lookup, opt Options) (*PcapClient, error) {
+	log.Println("Creating Pcap client...")
 	client := &PcapClient{
 		bindIPs:           make(map[string]bool),
 		sinker:            NewSinker(),
@@ -46,16 +47,18 @@ func NewPcapClient(lookup Lookup, opt Options) (*PcapClient, error) {
 		disableDNSResolve: opt.DisableDNSResolve,
 		allDevices:        opt.AllDevices,
 	}
-
+	log.Println("Pcap client created, creating context")
 	client.ctx, client.cancel = context.WithCancel(context.Background())
+	log.Println("Context created, getting available devices")
 	if err := client.getAvailableDevices(); err != nil {
+		log.Println("Error getting available devices", err)
 		return nil, err
 	}
-
+	log.Println("Available devices found, listening to handlers")
 	for _, handler := range client.handlers {
 		go client.listen(handler)
 	}
-
+	log.Println("Handlers listened")
 	return client, nil
 }
 
