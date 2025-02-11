@@ -2,6 +2,7 @@ package snifferlib
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -68,8 +69,11 @@ type Sniffer struct {
 }
 
 func NewSniffer(opts Options) (*Sniffer, error) {
+	log.Println("Starting sniffer...")
 	dnsResolver := NewDnsResolver()
+	log.Println("DNS resolver Created")
 	pcapClient, err := NewPcapClient(dnsResolver.Lookup, opts)
+	log.Println("Pcap client created")
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +97,9 @@ func (s *Sniffer) SwitchViewMode() {
 }
 
 func (s *Sniffer) Start() {
-	// events := termui.PollEvents()
+	log.Println("Sniffer start called")
+	// events := termui.PollEvents()'
+	log.Println("Refreshing Sniffer")
 	s.Refresh()
 	// var paused bool
 
@@ -132,12 +138,17 @@ func (s *Sniffer) Close() {
 }
 
 func (s *Sniffer) Refresh() {
+	log.Println("Refreshing Sniffer")
 	utilization := s.pcapClient.sinker.GetUtilization()
+	log.Println("Utilization: recieved"))
 	openSockets, err := s.socketFetcher.GetOpenSockets()
+	log.Println("Got open sockets")
 	if err != nil {
+		log.Println("Error getting open sockets:", err)
 		return
 	}
 
 	s.statsManager.Put(Stat{OpenSockets: openSockets, Utilization: utilization})
+	log.Println("Stats manager put")
 	// s.ui.viewer.Render(s.statsManager.GetStats())
 }
