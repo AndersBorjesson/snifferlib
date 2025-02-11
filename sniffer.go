@@ -140,7 +140,7 @@ func (s *Sniffer) Close() {
 func (s *Sniffer) Refresh() {
 	log.Println("Refreshing Sniffer")
 	utilization := s.pcapClient.sinker.GetUtilization()
-	log.Println("Utilization: recieved"))
+	log.Println("Utilization: recieved")
 	openSockets, err := s.socketFetcher.GetOpenSockets()
 	log.Println("Got open sockets")
 	if err != nil {
